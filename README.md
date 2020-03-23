@@ -4,7 +4,7 @@ _richR_ provide functions _richGO_, _richKEGG_,and _enrich_ to do enrichment ana
 ## Installation
 ```
 library(devtools)
-install_github("guokai8/richR")
+install_github("hurlab/richR")
 ``` 
 ## Quick tour
 ```{r}
