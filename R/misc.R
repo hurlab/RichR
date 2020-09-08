@@ -13,6 +13,38 @@ as.data.frame.richResult <- function(x, ...) {
 as.data.frame.GSEAResult <- function(x, ...) {
   as.data.frame(x@result, ...)
 }
+##' @method row.names Annot
+##' @export
+row.names.Annot<-function(x,...){
+  row.names(x@annot)
+}
+
+##' @method row.names richResult
+##' @export
+row.names.richResult <- function(x, ...) {
+  row.names(x@result)
+}
+##' @method row.names GSEAResult
+##' @export
+row.names.GSEAResult <- function(x, ...) {
+  row.names(x@result)
+}
+##' @method names Annot
+##' @export
+names.Annot<-function(x,...){
+  names(x@annot)
+}
+##' @method names richResult
+##' @export
+names.richResult <- function(x, ...) {
+  names(x@result)
+}
+##' @method names GSEAResult
+##' @export
+names.GSEAResult <- function(x, ...) {
+  names(x@result)
+}
+
 ##' @importFrom utils head
 ##' @method head Annot
 ##' @export
@@ -140,10 +172,10 @@ getdetail<-function(rese,resd,sep){
   gene<-strsplit(as.vector(rese$GeneID),split=sep)
   names(gene)<-rese$Annot
   gened<-data.frame("TERM"=rep(names(gene),times=unlist(lapply(gene,length))),
-                    "Annot"=rep(resultFis$Term,times=unlist(lapply(gene,length))),
+                    "Annot"=rep(rese$Term,times=unlist(lapply(gene,length))),
                     "GeneID"=unlist(gene),row.names=NULL,
-                    "Pvalue"=rep(resultFis$Pvalue,times=unlist(lapply(gene,length))),
-                    "Padj"=rep(resultFis$Padj,times=unlist(lapply(gene,length)))
+                    "Pvalue"=rep(rese$Pvalue,times=unlist(lapply(gene,length))),
+                    "Padj"=rep(rese$Padj,times=unlist(lapply(gene,length)))
   )
   gened$GeneID<-as.character(gened$GeneID)
   res<-left_join(gened,resd,by=c("GeneID"="gene"))
@@ -161,12 +193,11 @@ getdetail<-function(rese,resd,sep){
 }
 
 ##' @importFrom dplyr filter_
-##' @importFrom AnnotationDbi select
 ##' @importFrom AnnotationDbi keys
 .get_go_dat<-function(ont="BP"){
   require(GO.db)
   key<-keys(GO.db)
-  suppressMessages(go_dat<-select(GO.db, keys=key, columns=c("TERM","ONTOLOGY"),keytype="GOID"))
+  suppressMessages(go_dat<-AnnotationDbi::select(GO.db, keys=key, columns=c("TERM","ONTOLOGY"),keytype="GOID"))
   if(ont=="BP") res<-as.data.frame(filter_(go_dat,~ONTOLOGY=="BP"))
   if(ont=="CC") res<-as.data.frame(filter_(go_dat,~ONTOLOGY=="CC"))
   if(ont=="MF") res<-as.data.frame(filter_(go_dat,~ONTOLOGY=="MF"))
@@ -189,6 +220,17 @@ getdetail<-function(rese,resd,sep){
     return(pathway)
   }
 }
+##' @importFrom KEGGREST keggList
+##'
+.get_kgm.data <- function(){
+  module <-  cbind(keggList('module'))
+  rownames(module)<-sub('md:','',rownames(module))
+  colnames(module)<-"annotation"
+  module<-as.data.frame(module)
+  module$annotation<-as.vector(module$annotation)
+  return(module)
+}
+
 ##' build annotaion for kegg
 ##' @param ontype GO or KEGG
 ##' @examples
@@ -200,6 +242,9 @@ getann<-function(ontype="GO"){
   }
   if(ontype=="KEGG"){
     res<-.get_kg_dat(builtin=F)
+  }
+  if(ontype=="Module"){
+    res <-.get_kgm_dat()
   }
   return(res)
 }
@@ -244,10 +289,10 @@ idconvert<-function(species,keys,fkeytype,tkeytype){
   dbname<-.getdbname(species);
   suppressMessages(require(dbname,character.only = T))
   dbname<-eval(parse(text=dbname))
-  mapIds(dbname,keys=as.vector(keys),
+  unlist(mapIds(dbname,keys=as.vector(keys),
          column=tkeytype,
          keytype=fkeytype,
-         multiVals="first")
+         multiVals="first"))
 }
 .getdbname<-function(species="human"){
   dbname=.getdb(species=species);
@@ -506,3 +551,24 @@ setAs(from = "data.frame", to = "richResult", def = function(from){
       keytype        = keytype
   )
 })
+
+#' rbind generic function for richResult object
+#'@importFrom S4Vectors bindROWS
+#'@export
+#'@author Kai Guo
+rbind.richResult<-function(...){
+    objects <- list(...)
+    objects <- lapply(objects,as.data.frame)
+    bindROWS(objects[[1L]],objects=objects[-1L])
+}
+
+#' rbind generic function for GSEAResult object
+#'@importFrom S4Vectors bindROWS
+#'@export
+#'@author Kai Guo
+rbind.GSEAResult<-function(...){
+  objects <- list(...)
+  objects <- lapply(objects,as.data.frame)
+  bindROWS(objects[[1L]],objects=objects[-1L])
+}
+
