@@ -13,10 +13,9 @@ richGSEA(
   minSize = 15,
   ontology = "",
   maxSize = 500,
-  nperm = 5000,
-  filename = NULL,
   padj.method = "BH",
   organism = NULL,
+  table = TRUE,
   sep = ",",
   ...
 )
@@ -24,9 +23,9 @@ richGSEA(
 \arguments{
 \item{x}{vector contains gene names}
 
-\item{...}{additional parameters}
+\item{object}{Annot object or dataframe}
 
-\item{Annot}{object or dataframe}
+\item{...}{additional parameters}
 }
 \value{
 GSEAResult
@@ -37,11 +36,11 @@ richGSEA
 \examples{
 \dontrun{
 set.seed(123)
-  hsako<-buildAnnot(species="human",keytype="SYMBOL",anntype = "KEGG")
-  name=sample(unique(hsako$GeneID),1000)
-  gene<-rnorm(1000)
-  names(gene)<-name
-  res<-richGSEA(gene,kodata = hsako)
+hsako<-buildAnnot(species="human",keytype="SYMBOL",anntype = "KEGG")
+name=sample(unique(hsako$GeneID),1000)
+gene<-rnorm(1000)
+names(gene)<-name
+res<-richGSEA(gene,object = hsako)
 }
 }
 \author{
