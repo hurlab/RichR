@@ -109,15 +109,13 @@ buildAnnot<-function(species="human",keytype="SYMBOL",anntype="GO",builtin=TRUE,
 ##' Download database from Msigdb and prepare for enrichment analysis
 ##' @name msigdbr
 ##' @importFrom msigdbr msigdbr
-##' @importFrom dplyr filter_
-##' @importFrom dplyr select_
+##' @importFrom dplyr filter
+##' @importFrom dplyr select
+##' @importFrom rlang sym
 ##' @importFrom magrittr %>%
 ##' @param species the species for query
 ##' @param keytype the gene ID type
-##' @param category Gene set category
-##' @param anntype Gene Set anntype
-##' @param save save the dataset or not
-##' @param path path to save the dataset
+##' @param anntype gene set anntype (GO,BP,CC,MF,KEGG,REACTOME,BIOCARTA)
 ##' @examples
 ##' \dontrun{
 ##' hsamsi<-buildMSIGDB(species="human",keytype="SYMBOL",anntype="GO")
@@ -127,6 +125,7 @@ buildAnnot<-function(species="human",keytype="SYMBOL",anntype="GO",builtin=TRUE,
 buildMSIGDB<-function(species="human",keytype="SYMBOL",anntype="GO",
                      category=NULL){
   flag=0
+  anntypes<-NULL
   if(!is.null(anntype)){
     if(anntype=="CGP"){
       category<-"C2"
@@ -135,15 +134,15 @@ buildMSIGDB<-function(species="human",keytype="SYMBOL",anntype="GO",
       category<-"C2"
     }
     if(anntype=="KEGG"){
-      anntype<-"CP:KEGG"
+      anntypes<-"CP:KEGG"
       category<-"C2"
     }
     if(anntype=="REACTOME"){
-      anntype<-"CP:REACTOME"
+      anntypes<-"CP:REACTOME"
       category<-"C2"
     }
     if(anntype=="BIOCARTA"){
-      anntype<-"CP:BIOCARTA"
+      anntypes<-"CP:BIOCARTA"
       category<-"C2"
     }
     if(anntype=="MIR"){
@@ -158,13 +157,19 @@ buildMSIGDB<-function(species="human",keytype="SYMBOL",anntype="GO",
     if(anntype=="CM"){
       category<-"C4"
     }
+    if(anntype=="GO"){
+      category<-"C5"
+    }
     if(anntype=="BP"){
+      anntypes<-"GO:BP"
       category<-"C5"
     }
     if(anntype=="CC"){
+      anntypes<-"GO:CC"
       category<-"C5"
     }
     if(anntype=="MF"){
+      anntypes<-"GO:MF"
       category<-"C5"
     }
   }
@@ -182,19 +187,31 @@ buildMSIGDB<-function(species="human",keytype="SYMBOL",anntype="GO",
   }
   cat("Downloading msigdb datasets ...\n")
   res <- msigdbr(species=mspe)
-  res <- res%>%filter_(~gs_cat==category)
-  if(!is.null(anntype)){
-    res <- res%>%filter_(~gs_subcat==anntype)
+  res <- subset(res,gs_cat==category)
+  if(!is.null(anntypes)){
+    res <- subset(res,gs_subcat==anntypes)
   }
-  res<-res%>%select_(~key,~gs_name)
+  if(anntype%in%c("GO","BP","CC","MF")){
+    res <- res[,c(key,"gs_exact_source","gs_name")]
+    res<-as.data.frame(res)
+    colnames(res)<-c("GeneID","GOALL","Annot")
+    res$Annot<-sub('.*@','',sub('_','@',res$Annot))
+  }else if(anntype=="KEGG"){
+    res <- res[,c(key,"gs_exact_source","gs_name")]
+    res<-as.data.frame(res)
+    colnames(res)<-c("GeneID","PATH","Annot")
+    res$PATH<-substr(res$PATH,4,8)
+  }else{
+    res<-res[,c(key,"gs_name")]
+    res<-as.data.frame(res)
+    colnames(res)<-c("GeneID","Term")
+    res$Term<-sub('.*@','',sub('_','@',res$Term))
+    res$Annot<-res[,2]
+  }
   if(flag==1){
     res[,1]<-idconvert(species,keys=res[,1],fkeytype="ENTREZID", tkeytype=keytype)
     res<-na.omit(res)
   }
-  res<-as.data.frame(res)
-  colnames(res)<-c("GeneID","Term")
-  res$Term<-sub('.*@','',sub('_','@',res$Term))
-  res$Annot<-res[,2]
   result<-new("Annot",
               species = species,
               anntype = anntype,
@@ -255,7 +272,7 @@ buildMSIGDB<-function(species="human",keytype="SYMBOL",anntype="GO",
       tmp<-na.omit(tmp)
     }
     MO_FILE=tmp
-    annot<-getann("module")
+    annot<-.get_kgm.data()
     MO_FILE[,1]<-as.vector(MO_FILE[,1])
     MO_FILE[,2]<-as.vector(MO_FILE[,2])
     MO_FILE$Annot<-annot[MO_FILE[,2],"annotation"]

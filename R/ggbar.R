@@ -11,7 +11,25 @@
 ##' @importFrom ggplot2 ggsave
 ##' @importFrom ggplot2 theme_light
 ##' @importFrom ggplot2 labs
-ggbar_internal<-function(resultFis,top=50,pvalue=0.05,order=FALSE,horiz=FALSE,
+##' @rdname ggbar
+##' @param object richResult object
+##' @param top number of terms you want to display,
+##' @param pvalue cutoff value of pvalue (if padj set as NULL)
+##' @param low low color
+##' @param high high color
+##' @param alpha transparency alpha
+##' @param font.x font of x axis
+##' @param font y font of y axis
+##' @param fontsize.x fontsize of x axis
+##' @param fontsize.y fontsize of y axis
+##' @param padj cutoff value of p adjust value
+##' @param usePadj use p adjust value as color or not (should use with padj)
+##' @param font.size font size for xlim or ylim
+##' @param filename figure output name
+##' @param width figure width
+##' @param height figure height
+##' @param horiz horiz or not
+ggbar_internal<-function(resultFis,top=50,pvalue=0.05,order=FALSE,horiz=TRUE,
                          low="lightpink",high="red",
                          font.x="bold",font.y="bold",fontsize.x=10,fontsize.y=10,
                          fontsize.text=3,angle=75,padj=NULL,usePadj=TRUE,
@@ -29,6 +47,7 @@ ggbar_internal<-function(resultFis,top=50,pvalue=0.05,order=FALSE,horiz=FALSE,
   }else{
     yheight=1
   }
+  resultFis$Term<-unlist(lapply(resultFis$Term,function(x).paste.char(x)))
   if(order==TRUE){
     resultFis$rich<-as.numeric(resultFis$Significant)/as.numeric(resultFis$Annotated)
     resultFis$Term<-factor(resultFis$Term,levels=resultFis$Term[order(resultFis$rich)])
@@ -59,7 +78,7 @@ ggbar_internal<-function(resultFis,top=50,pvalue=0.05,order=FALSE,horiz=FALSE,
     }
   }
   if(!is.null(filename)){
-    ggsave(p,file=paste(filename,OP,"enrich.pdf",sep="_"),width=width,height=height)
+    ggsave(p,file=paste(filename,"enrich.pdf",sep="_"),width=width,height=height)
   }
   p
 }
@@ -81,6 +100,7 @@ ggbar_internal<-function(resultFis,top=50,pvalue=0.05,order=FALSE,horiz=FALSE,
 ##' @param filename figure output name
 ##' @param width figure width
 ##' @param height figure height
+##' @param horiz horiz or not
 ##' @examples
 ##' \dontrun{
 ##'   hsako<-buildAnnot(species="human",keytype="SYMBOL",anntype = "KEGG")
@@ -91,10 +111,10 @@ ggbar_internal<-function(resultFis,top=50,pvalue=0.05,order=FALSE,horiz=FALSE,
 ##' @export
 ##' @author Kai Guo
 setMethod("ggbar", signature(object = "richResult"),definition = function(object,top=50,pvalue=0.05,padj=NULL,order=FALSE,
-                   usePadj=TRUE,fontsize.x=10,fontsize.y=10,fontsize.text=3,angle=75,filename=NULL,
-                   width=10,height=8,...) {
+                   usePadj=TRUE,fontsize.x=10,fontsize.y=10,fontsize.text=3,angle=0,filename=NULL,
+                   width=10,height=8,horiz=TRUE,...) {
             ggbar_internal(object@result,top=top,pvalue=pvalue,padj=padj,order=order,
-                           usePadj=usePadj,fontsize.x=fontsize.x,fontsize.y=fontsize.y,fontsize.text = fontsize.text,angle=angle,filename=filename, ...)
+                           usePadj=usePadj,fontsize.x=fontsize.x,fontsize.y=fontsize.y,fontsize.text = fontsize.text,angle=angle,filename=filename,horiz=horiz, ...)
           })
 ##' barplot for Enrichment result
 ##' @rdname ggbar
@@ -114,6 +134,7 @@ setMethod("ggbar", signature(object = "richResult"),definition = function(object
 ##' @param filename figure output name
 ##' @param width figure width
 ##' @param height figure height
+##' @param horiz horiz or not
 ##' @examples
 ##' \dontrun{
 ##'   hsako<-buildAnnot(species="human",keytype="SYMBOL",anntype = "KEGG")
@@ -124,8 +145,8 @@ setMethod("ggbar", signature(object = "richResult"),definition = function(object
 ##' @export
 ##' @author Kai Guo
 setMethod("ggbar", signature(object = "data.frame"),definition = function(object,top=50,pvalue=0.05,padj=NULL,order=FALSE,
-                                                                          usePadj=TRUE,fontsize.x=10,fontsize.y=10,fontsize.text=3,angle=75,filename=NULL,
-                                                                          width=10,height=8,...) {
+                                                                          usePadj=TRUE,fontsize.x=10,fontsize.y=10,fontsize.text=3,angle=0,filename=NULL,
+                                                                          width=10,height=8,horiz=horiz,...) {
   ggbar_internal(object,top=top,pvalue=pvalue,padj=padj,order=order,
                  usePadj=usePadj,fontsize.x=fontsize.x,fontsize.y=fontsize.y,fontsize.text = fontsize.text,angle=angle,filename=filename, ...)
           })

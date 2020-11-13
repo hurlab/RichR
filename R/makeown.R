@@ -6,7 +6,7 @@
 #' @examples
 #' \dontrun{
 #' fromKEGG(species="ath")
-#' athgo<-makeOwn(dbname="org.ath.eg.db",anntype="GO")
+#' athgo<-buildOwn(dbname="org.ath.eg.db",anntype="GO")
 #' }
 #' @author Kai Guo
 #' @export
@@ -26,14 +26,26 @@ buildOwn<-function(dbname,anntype="GO",OP=NULL,species="",keytype=""){
     if(!is.null(OP)){
       annof<-annof[annof$ONTOLOGYALL==OP,]
     }
-  }
-  if(anntype=="KEGG"){
-    annof=select(dbname,keys=keys(dbname),columns="PATH")
+  }else if(anntype=="KEGG"){
+    annof=AnnotationDbi::select(dbname,keys=keys(dbname),columns="PATH")
     annof<-na.omit(annof)
     annot<-getann("KEGG")
     annof[,1]<-as.vector(annof[,1])
     annof[,2]<-as.vector(annof[,2])
     annof$Annot<-annot[annof[,2],"annotation"]
+  }else if(anntype=="KEGGM"){
+    annof=AnnotationDbi::select(dbname,keys=keys(dbname),columns="KEGGM")
+    annof<-na.omit(annof)
+    annot<-.get_kgm.data()
+    annof[,1]<-as.vector(annof[,1])
+    annof[,2]<-as.vector(annof[,2])
+    annof$Annot<-annot[annof[,2],"annotation"]
+  }else{
+    annof=AnnotationDbi::select(dbname,keys=keys(dbname),columns=anntype)
+    annof<-na.omit(annof)
+    annof[,1]<-as.vector(annof[,1])
+    annof[,2]<-as.vector(annof[,2])
+    annof$Annot<-annof[,2]
   }
   result<-new("Annot",
               species = species,

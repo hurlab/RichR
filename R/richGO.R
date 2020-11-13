@@ -46,15 +46,15 @@ richGO_internal<-function(x,godata,ontology="BP",pvalue=0.05,padj=NULL,
   }else{
     resultFis<-resultFis[resultFis$Padj<padj,]
   }
-  resultFis<-filter_(resultFis, ~Significant<=maxSize)
+  resultFis<-subset(resultFis, Significant<=maxSize)
   if(keepRich==FALSE){
-    resultFis<-filter_(resultFis, ~Significant>=minSize)
+    resultFis<-subset(resultFis, Significant>=minSize)
   }else{
-    resultFis<-filter_(resultFis, ~Significant>=minSize|(~Annotated/~Significant)==1)
+    resultFis<-subset(resultFis, Significant>=minSize|(Significant/Annotated)==1)
   }
   rownames(resultFis)<-resultFis$Annot
   if(!is.null(filename)){
-    write.table(resultFis,file=paste(filename,ontology,"res.txt",sep="_"),sep="\t",quote=F,row.names=F)
+    write.table(resultFis,file=paste(filename,".txt",sep=""),sep="\t",quote=F,row.names=F)
   }
   if(is.data.frame(x)){
     detail<-getdetail(resultFis,x,sep=sep)

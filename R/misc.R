@@ -192,15 +192,14 @@ getdetail<-function(rese,resd,sep){
   max(which(intervals <= v))
 }
 
-##' @importFrom dplyr filter_
 ##' @importFrom AnnotationDbi keys
 .get_go_dat<-function(ont="BP"){
   require(GO.db)
   key<-keys(GO.db)
   suppressMessages(go_dat<-AnnotationDbi::select(GO.db, keys=key, columns=c("TERM","ONTOLOGY"),keytype="GOID"))
-  if(ont=="BP") res<-as.data.frame(filter_(go_dat,~ONTOLOGY=="BP"))
-  if(ont=="CC") res<-as.data.frame(filter_(go_dat,~ONTOLOGY=="CC"))
-  if(ont=="MF") res<-as.data.frame(filter_(go_dat,~ONTOLOGY=="MF"))
+  if(ont=="BP") res<-as.data.frame(subset(go_dat,ONTOLOGY=="BP"))
+  if(ont=="CC") res<-as.data.frame(subset(go_dat,ONTOLOGY=="CC"))
+  if(ont=="MF") res<-as.data.frame(subset(go_dat,ONTOLOGY=="MF"))
   rownames(res)<-res[,1]
   res<-res[, 2, drop = FALSE]
   colnames(res)<-"annotation"
@@ -571,4 +570,30 @@ rbind.GSEAResult<-function(...){
   objects <- lapply(objects,as.data.frame)
   bindROWS(objects[[1L]],objects=objects[-1L])
 }
+#' replace the term string with newlines
+.paste.char<-function(x){
+  return(gsub("([^ ]+ [^ ]+ [^ ]+ [^ ]+) ", "\\1\n", x))
+}
+#' remove the newlines
+.clean.char<-function(x){
+  return(gsub('\\\n',' ',x))
+}
+
+##'
+setAs(from = "richResult", to = "data.frame", def = function(from){
+  result <- as.data.frame(from@result)
+  result
+})
+##'
+setAs(from = "GSEAResult", to = "data.frame", def = function(from){
+  result <- as.data.frame(from@result)
+  result
+})
+
+##'
+setAs(from = "Annot", to = "data.frame", def = function(from){
+  result <- as.data.frame(from@annot)
+  result
+})
+
 

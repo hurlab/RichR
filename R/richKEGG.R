@@ -1,5 +1,6 @@
 #' KEGG Pathway Enrichment analysis function
-#' @importFrom dplyr filter_
+#' @importFrom dplyr filter
+#' @importFrom rlang sym
 #' @param x vector contains gene names or dataframe with DEGs information
 #' @param kodata GO annotation data
 #' @param ontology KEGG
@@ -35,7 +36,11 @@ richKEGG_internal<-function(x,kodata,pvalue=0.05,padj=NULL,ontology="KEGG",
     N=length(unique(kodata[,1]))
     rhs<-hyper_bench_vector(k,M,N,n)
     lhs<-p.adjust(rhs,method=padj.method)
-    all_ko<-.get_kg_dat(builtin=builtin)
+    if(ontology=="KEGGM"){
+      all_ko<-.get_kgm.data()
+    }else{
+      all_ko<-.get_kg_dat(builtin=builtin)
+    }
     rhs_an<-all_ko[names(rhs),]
     rhs_gene<-unlist(lapply(fko2gene, function(x)paste(unique(x),sep="",collapse = sep)))
     resultFis<-data.frame("Annot"=names(rhs),"Term"=rhs_an,"Annotated"=M[names(rhs)],
@@ -48,11 +53,11 @@ richKEGG_internal<-function(x,kodata,pvalue=0.05,padj=NULL,ontology="KEGG",
     }else{
       resultFis<-resultFis[resultFis$Padj<padj,]
     }
-    resultFis<-filter_(resultFis, ~Significant<=maxSize)
+    resultFis<-subset(resultFis, Significant<=maxSize)
     if(keepRich==FALSE){
-      resultFis<-filter_(resultFis, ~Significant>=minSize)
+      resultFis<-subset(resultFis, Significant>=minSize)
     }else{
-      resultFis<-filter_(resultFis, ~Significant>=minSize|(~Annotated/~Significant)==1)
+      resultFis<-subset(resultFis, Significant>=minSize|(Significant/Annotated)==1)
     }
     rownames(resultFis)<-resultFis$Annot
     if(!is.null(filename)){

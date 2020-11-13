@@ -47,6 +47,7 @@ ggdot_internal<-function(object,top=50,pvalue=0.05,order=FALSE,
   if(nrow(dd)>=1){
     dd[,3]<-dd[,4]/dd[,3]
     colnames(dd)[3]<-"rich";
+    dd$Term<-unlist(lapply(dd$Term,function(x).paste.char(x)))
     if(order==TRUE){
       dd$Term<-factor(dd$Term,levels=dd$Term[order(dd$rich)])
     }
@@ -64,7 +65,7 @@ ggdot_internal<-function(object,top=50,pvalue=0.05,order=FALSE,
       cat("No Pathway enrichment results were found!\n")
     }
   if(!is.null(filename)){
-    ggsave(p,file=paste(filename,"KEGG.pdf",sep="_"),width=width,height=height)
+    ggsave(p,file=paste(filename,"dot.pdf",sep="_"),width=width,height=height)
   }
   p
 }
